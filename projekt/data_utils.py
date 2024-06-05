@@ -1,10 +1,12 @@
 import pandas as pd
 
+def to_list(x):
+    return x.split(" // ") if type(x)==str else []
 
 def read_pathways(filename="data/pathways.csv"):
     pathways_df = pd.read_csv(filename)
     pathways_df["Reaction-List"] = pathways_df["Reaction-List"].str.split(" // ")
-    pathways_df["Species"] = pathways_df["Species"].str.split(" // ")
+    pathways_df["Species"] = pathways_df["Species"].apply(to_list)
     pathways_df["In-Pathway"] = pathways_df["In-Pathway"].str.split(" // ")
     pathways_df["Super-Pathways"] = pathways_df["Super-Pathways"].str.split(" // ")
     pathways_df.set_index("Object ID", inplace=True)

@@ -94,3 +94,15 @@ class Graph:
         nx.draw(G, pos, with_labels=True, node_color=group_colors, node_size=1000, edge_color='gray', linewidths=1, font_size=10)
         plt.title("Graph Representation of Reactions and Compounds")
         plt.show()
+
+    def __repr__(self):
+        reactions = str(self.reactions[:5])
+        reactions = reactions[:-1] + " ..." if len(self.reactions) > 5 else reactions
+        compounds = str(self.compounds[:5])
+        compounds = compounds[:-1] + " ..." if len(self.compounds) > 5 else compounds
+        return (
+            f"Graph\n"
+            f"reactions ({len(self.reactions)}): {reactions}\n"
+            f"compounds ({len(self.compounds)}): {compounds}\n"
+            f"edges ({int(self.adj_matrix.sum())})"
+        )
