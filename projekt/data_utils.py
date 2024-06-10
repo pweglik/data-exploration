@@ -34,6 +34,7 @@ def read_compounds(filename="data/compounds.csv"):
     
 
 def get_popular_compounds():
+    reactions_df = read_reactions()
     substrates_count = {}
     for substrates in reactions_df["Substrates"]:
         for substrate in substrates:
@@ -43,4 +44,4 @@ def get_popular_compounds():
                 substrates_count[substrate] = 1
                 
     compound_popularity = pd.Series(substrates_count, name="Count").sort_values(ascending=False)
-    compound_popularity
+    return compound_popularity
