@@ -2,6 +2,10 @@ import numpy as np
 import pandas as pd
 from typing import List, Union
 
+import matplotlib.pyplot as plt 
+import networkx as nx
+from networkx.drawing.nx_agraph import graphviz_layout
+
 from data_utils import read_pathways, read_reactions, read_compounds
 
 pathways_df = read_pathways()
@@ -49,7 +53,7 @@ class Graph:
         return Graph.__new__(Graph, adj_matrix, list(reaction_v), list(compound_v))
 
     @staticmethod
-    def from_pathways(pathway_ids: List[str], include_subpathways=True):
+    def from_pathways(pathway_ids: List[str], include_subpathways=True, include_reactions=True):
         pathways = pathways_df.loc[pathway_ids]
         reaction_ids = set.union(*(set(x) for x in pathways["Reaction-List"]))
 
@@ -61,38 +65,45 @@ class Graph:
             reaction_ids.update(more_reaction_ids)
 
         reaction_ids = [r for r in reaction_ids if "PWY" not in r]
+        reaction_ids = [r for r in reaction_ids if "HEME-BIOSYNTHESIS-II" not in r]
         
-        
-        return Graph.from_reactions(reaction_ids)
+        return Graph.from_reactions(
+            reaction_ids,
+            include_reactions=include_reactions
+        )
 
     @staticmethod
-    def from_organism(organism_id: str):
+    def from_organism(organism_id: str, include_subpathways=True, include_reactions=True):
         pathways = pathways_df.index[
             pathways_df["Species"].map(lambda x: organism_id in x if type(x) == list else False)
         ]
 
-        return Graph.from_pathways(list(pathways))
+        return Graph.from_pathways(
+            list(pathways),
+            include_subpathways=include_subpathways,
+            include_reactions=include_reactions,
+        )
 
     def prune_compounds(self, to_remove: List[str]):
         all_labels = self.compounds + self.reactions
         indices_to_keep = [i for (i, x) in enumerate(all_labels) if x not in to_remove]
         
         adj_matrix = self.adj_matrix[indices_to_keep, :][:, indices_to_keep]
-        reactions = [r for r in reactions if r not in to_remove]
-        compounds = [c for c in compounds if c not in to_remove]
+        reactions = [r for r in self.reactions if r not in to_remove]
+        compounds = [c for c in self.compounds if c not in to_remove]
         
         return Graph.__new__(Graph, adj_matrix, reactions, compounds)
         
-    def plot(self):
-        node_labels = compounds + reactions
-        G = nx.from_numpy_array(adj_matrix, create_using=nx.DiGraph)
+    def plot(self, title="Graph"):
+        node_labels = self.compounds + self.reactions
+        G = nx.from_numpy_array(self.adj_matrix, create_using=nx.DiGraph)
         mapping = dict(zip(range(len(node_labels)), node_labels))
         G = nx.relabel_nodes(G, mapping)
-        group_colors = ['lightblue'] * len(compounds) + ['lightgreen'] * len(reactions)
+        group_colors = ['lightblue'] * len(self.compounds) + ['lightgreen'] * len(self.reactions)
         plt.figure(figsize=(12, 10))
         pos = graphviz_layout(G, prog='dot')  
         nx.draw(G, pos, with_labels=True, node_color=group_colors, node_size=1000, edge_color='gray', linewidths=1, font_size=10)
-        plt.title("Graph Representation of Reactions and Compounds")
+        plt.title(title)
         plt.show()
 
     def __repr__(self):
